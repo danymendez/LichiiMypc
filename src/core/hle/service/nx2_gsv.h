@@ -3032,17 +3032,24 @@ private:
             if (m_flush) {
                 continue;
             }
-            for (auto& picture : pictures) {
-                const u64 pts = picture.pts;
-                m_decoded.push_back({std::move(picture), pts, false});
-            }
-            if (input.end) {
-                // The client stops at the frame marked end of stream; give it one even when the
-                // last input held no picture.
-                if (m_decoded.empty()) {
-                    m_decoded.push_back({std::nullopt, input.pts, true});
-                } else {
-                    m_decoded.back().end = true;
+            if (decoder == nullptr || !decoder->IsOpen()) {
+                // If the video decoder is unavailable (e.g. missing AV1 codec in FFmpeg),
+                // generate a synthetic placeholder frame so guest syncpoints continue advancing
+                // instead of deadlocking the game on video playback.
+                m_decoded.push_back({std::nullopt, input.pts, input.end});
+            } else {
+                for (auto& picture : pictures) {
+                    const u64 pts = picture.pts;
+                    m_decoded.push_back({std::move(picture), pts, false});
+                }
+                if (input.end) {
+                    // The client stops at the frame marked end of stream; give it one even when the
+                    // last input held no picture.
+                    if (m_decoded.empty()) {
+                        m_decoded.push_back({std::nullopt, input.pts, true});
+                    } else {
+                        m_decoded.back().end = true;
+                    }
                 }
             }
         }

@@ -274,6 +274,7 @@ else()
                 --enable-decoder=h264
                 --enable-decoder=vp8
                 --enable-decoder=vp9
+                --enable-decoder=av1
                 --enable-filter=yadif,scale
                 --enable-pic
                 --cc=${FFmpeg_CC}
